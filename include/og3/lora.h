@@ -29,7 +29,7 @@ class LoRaModule : public Module {
 
   // on_initialized is called when LoRa.begin() has succeeded, for setting-up the module.
   LoRaModule(const char* name, const Options& options, App* app, VariableGroup& vg,
-	     const std::function<void()>& on_initialized);
+             const std::function<void()>& on_initialized);
 
   bool is_ok() const { return m_is_ok; }
 
@@ -42,6 +42,5 @@ class LoRaModule : public Module {
   unsigned m_init_tries = 0;
   bool m_is_ok = false;
 };
-
 
 }  // namespace og3
