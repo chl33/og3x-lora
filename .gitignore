@@ -1,0 +1,8 @@
+*~
+.ccls
+.clang_complete
+.pio
+/.ccls-cache/
+/.dir-locals.el
+/bin/license-header-checker
+og3x*.tar.gz
