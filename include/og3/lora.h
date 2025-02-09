@@ -38,7 +38,7 @@ class LoRaModule : public Module {
   void setup_lora();
 
   const Options m_options;
-  const std::function<void()>& m_on_initialized;
+  const std::function<void()> m_on_initialized;
   App* m_app;
   unsigned m_init_tries = 0;
   bool m_is_ok = false;
