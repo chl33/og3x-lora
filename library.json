@@ -1,6 +1,6 @@
 {
     "name": "og3x-lora",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Add support RTM95 LoRa module to chl33/og3",
     "keywords": "esp32, esp8266, lora",
     "authors": [

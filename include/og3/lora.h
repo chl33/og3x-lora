@@ -15,6 +15,7 @@
 
 namespace og3 {
 
+// LoRaModule helps automatically setup a LoRa radio module.
 class LoRaModule : public Module {
  public:
   static constexpr unsigned kMaxInitTries = 10;

@@ -23,6 +23,7 @@ LoRaModule::LoRaModule(const char* name, const LoRaModule::Options& options, App
 
 void LoRaModule::setup_lora() {
   m_init_tries += 1;
+  m_app->log().debugf("Calling LoRa.begin() (try %u/%u).", m_init_tries, m_options.max_setup_tries);
   if (!LoRa.begin(m_options.frequency)) {
     m_app->log().logf("Failed to setup LoRa: %u/%u tries.", m_init_tries,
                       m_options.max_setup_tries);
