@@ -13,9 +13,12 @@ LoRaModule::LoRaModule(const char* name, const LoRaModule::Options& options, App
       m_app(app) {
   add_init_fn([this]() {
     // setup LoRa transceiver module
+    m_app->log().debug("Calling LoRa.setPins().");
     LoRa.setPins(m_options.gpio_ss, m_options.gpio_rst, m_options.gpio_dio0);
     if (m_on_initialized) {
+      m_app->log().debug("Calling LoRaModule on_initialized().");
       m_on_initialized();
+      m_app->log().debug("LoRaModule on_initialized() finished.");
     }
   });
   add_start_fn([this]() { this->setup_lora(); });
