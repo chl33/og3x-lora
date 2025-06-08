@@ -5,6 +5,8 @@
 #include <og3/lora.h>
 #include <sys/types.h>
 
+#include <memory>
+
 namespace og3 {
 namespace lora {
 
@@ -199,9 +201,10 @@ void LoRaModule::config_lora() {
   } else {
     LoRa.disableCrc();
   }
-  m_app->log().logf("LoRa configured: %s %s bw:%s sync_word:0x%02x%s", m_frequency.string().c_str(),
-                    m_spreading_factor.string().c_str(), m_signal_bandwidth.string().c_str(),
-                    m_sync_word.value(), m_enable_crc.value() ? " (CRC)" : "");
+  m_app->log().logf("LoRa configured: %s %s bw:%s sync_word:0x%02x%s usa:pktsize:%u",
+                    m_frequency.string().c_str(), m_spreading_factor.string().c_str(),
+                    m_signal_bandwidth.string().c_str(), m_sync_word.value(),
+                    m_enable_crc.value() ? " (CRC)" : "", usa_max_payload());
 }
 
 void LoRaModule::setup_lora() {

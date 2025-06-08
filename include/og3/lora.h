@@ -102,6 +102,9 @@ class LoRaModule : public Module {
 
   bool is_ok() const { return m_is_ok; }
   bool is_transmitting() const { return m_is_transmitting; }
+  unsigned usa_max_payload() const {
+    return lora::usa_max_payload_bytes(m_spreading_factor.value(), m_signal_bandwidth.value());
+  }
   void set_on_transmit_done(const std::function<void()>& fn);
 
   void send_packet(const u_int8_t* buffer, size_t num_bytes);
