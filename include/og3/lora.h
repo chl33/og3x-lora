@@ -7,6 +7,7 @@
 #include <og3/app.h>
 #include <og3/constants.h>
 #include <og3/variable.h>
+#include <sys/types.h>
 
 #include <functional>
 #include <string>
@@ -57,6 +58,7 @@ unsigned usa_max_payload_bytes(SpreadingFactor spreading_factor, SignalBandwidth
 }  // namespace lora
 
 // LoRaModule helps automatically setup a LoRa radio module.
+// NOTE: The transmitt-done callback is not working for me right now.
 class LoRaModule : public Module {
  public:
   static const char kName[];
@@ -80,6 +82,7 @@ class LoRaModule : public Module {
 
     unsigned sync_word = 0x01;  // Select something between 0-0xFF
     bool enable_crc = false;
+    std::function<void()> on_transmit_done = nullptr;
 
     lora::Frequency frequency = lora::FrequencyVariable::kDefault;
     lora::SpreadingFactor spreading_factor = lora::SpreadingFactorVariable::kDefault;
@@ -95,9 +98,16 @@ class LoRaModule : public Module {
 
   // on_initialized is called when LoRa.begin() has succeeded, for setting-up the module.
   LoRaModule(const Options& options, App* app, VariableGroup& vg,
-             const std::function<void()>& on_initialized);
+             const std::function<void()>& on_initialized = nullptr);
 
   bool is_ok() const { return m_is_ok; }
+  bool is_transmitting() const { return m_is_transmitting; }
+  void set_on_transmit_done(const std::function<void()>& fn);
+
+  void send_packet(const u_int8_t* buffer, size_t num_bytes);
+
+  // This is called by an interrupt.
+  void transmit_done_callback();
 
  private:
   void setup_lora();
@@ -112,6 +122,7 @@ class LoRaModule : public Module {
   const int m_gpio_rst;
   const int m_gpio_dio0;
   const int m_max_setup_tries;
+  std::function<void()> m_on_transmit_done;
 
   Variable<unsigned> m_sync_word;
   BoolVariable m_enable_crc;
@@ -124,6 +135,7 @@ class LoRaModule : public Module {
 
   unsigned m_init_tries = 0;
   bool m_is_ok = false;
+  bool m_is_transmitting = false;
 };
 
 }  // namespace og3

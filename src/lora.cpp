@@ -3,6 +3,7 @@
 
 #include <og3/config_interface.h>
 #include <og3/lora.h>
+#include <sys/types.h>
 
 namespace og3 {
 namespace lora {
@@ -20,6 +21,13 @@ unsigned varFlag(const LoRaModule::Options& opts, LoRaModule::OptionSelect osel)
   unsigned flags = check_set(0x0, opts.publish_options, VariableBase::kNoPublish, true);
   flags = check_set(flags, opts.config_options, VariableBase::kConfig);
   return check_set(flags, opts.settable_options, VariableBase::kSettable);
+}
+
+LoRaModule* s_lora_module = nullptr;
+void onTxDone() {
+  if (s_lora_module) {
+    s_lora_module->transmit_done_callback();
+  }
 }
 }  // namespace
 
@@ -154,6 +162,9 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
                          vg),
       m_max_payload("max_payload", 0, nullptr, "max payload", 0, vg) {
   setDependencies(&m_dependencies);
+  if (options.on_transmit_done) {
+    set_on_transmit_done(options.on_transmit_done);
+  }
   add_link_fn([this](og3::NameToModule& name_to_module) -> bool {
     m_config = ConfigInterface::get(name_to_module);
     return m_config != nullptr;
@@ -168,6 +179,14 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
         lora::usa_max_payload_bytes(m_spreading_factor.value(), m_signal_bandwidth.value());
   });
   add_start_fn([this]() { this->setup_lora(); });
+}
+
+void LoRaModule::set_on_transmit_done(const std::function<void()>& fn) {
+  m_on_transmit_done = fn;
+  if (!lora::s_lora_module) {
+    lora::s_lora_module = this;
+    LoRa.onTxDone(lora::onTxDone);
+  }
 }
 
 void LoRaModule::config_lora() {
@@ -204,6 +223,22 @@ void LoRaModule::setup_lora() {
     m_app->log().debug("Calling LoRaModule on_initialized().");
     m_on_initialized();
   }
+}
+
+void LoRaModule::transmit_done_callback() {
+  m_app->tasks().runIn(1, [this]() {
+    if (m_on_transmit_done) {
+      m_on_transmit_done();
+    }
+    m_is_transmitting = false;
+  });
+}
+
+void LoRaModule::send_packet(const u_int8_t* buffer, size_t num_bytes) {
+  LoRa.beginPacket();
+  LoRa.write(buffer, num_bytes);
+  m_is_transmitting = true;
+  LoRa.endPacket();
 }
 
 }  // namespace og3
