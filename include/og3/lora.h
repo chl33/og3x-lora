@@ -13,7 +13,7 @@
 
 // Forward declarations for RadioLib
 class Module;
-class SX1278;
+class SX1276;
 
 namespace og3 {
 class ConfigInterface;
@@ -159,7 +159,7 @@ class LoRaModule : public Module {
   float m_last_snr = 0.0f;
 
   ::Module* m_mod = nullptr;
-  ::SX1278* m_radio = nullptr;
+  ::SX1276* m_radio = nullptr;
 };
 
 }  // namespace og3

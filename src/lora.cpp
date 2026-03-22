@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
 #include <RadioLib.h>
+#include <SPI.h>
 #include <og3/config_interface.h>
 #include <og3/lora.h>
 #include <sys/types.h>
@@ -27,11 +28,6 @@ unsigned varFlag(const LoRaModule::Options& opts, LoRaModule::OptionSelect osel)
 }
 
 LoRaModule* s_lora_module = nullptr;
-void onActionDone() {
-  if (s_lora_module) {
-    s_lora_module->transmit_done_callback();
-  }
-}
 }  // namespace
 
 const char* SpreadingFactorVariable::kNames[6] = {"SF7", "SF8", "SF9", "SF10", "SF11", "SF12"};
@@ -217,8 +213,8 @@ void LoRaModule::setup_lora() {
   m_app->log().debugf("Initializing RadioLib (try %u/%u).", m_init_tries, m_max_setup_tries);
 
   if (!m_mod) {
-    m_mod = new Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1);
-    m_radio = new SX1278(m_mod);
+    m_mod = new ::Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1);
+    m_radio = new ::SX1276(m_mod);
   }
 
   int state = m_radio->begin(m_frequency.to_uint() / 1000000.0f);
@@ -278,7 +274,7 @@ int LoRaModule::poll_packet(uint8_t* buffer, size_t max_bytes) {
   // In RadioLib, we can check if the IRQ for RX done is set.
   // For SX127x, this is usually DIO0.
   // If we don't have interrupts, we can check the IRQ flags.
-  if (m_mod->digitalRead(m_gpio_dio0) == HIGH) {
+  if (::digitalRead(m_gpio_dio0) == HIGH) {
     int state = m_radio->readData(buffer, max_bytes);
     if (state == RADIOLIB_ERR_NONE) {
       m_last_rssi = m_radio->getRSSI();
