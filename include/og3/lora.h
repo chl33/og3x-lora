@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <LoRa.h>
 #include <og3/app.h>
 #include <og3/constants.h>
 #include <og3/variable.h>
@@ -12,10 +11,15 @@
 #include <functional>
 #include <string>
 
+// Forward declarations for RadioLib
+class Module;
+class SX1278;
+
 namespace og3 {
 class ConfigInterface;
 
 namespace lora {
+// ... (rest of lora namespace unchanged)
 
 enum class SpreadingFactor { kSF7, kSF8, kSF9, kSF10, kSF11, kSF12 };
 enum class SignalBandwidth { k125kHz, k500kHz };
@@ -75,9 +79,10 @@ class LoRaModule : public Module {
   };
 
   struct Options {
-    int gpio_ss = 5;    // ESP32 GPIO for SS
-    int gpio_rst = 14;  // ESP32 GPIO for RST
-    int gpio_dio0 = 2;  // ESP32 GPIO for DIO0
+    int gpio_ss = 5;     // ESP32 GPIO for SS
+    int gpio_rst = 14;   // ESP32 GPIO for RST
+    int gpio_dio0 = 2;   // ESP32 GPIO for DIO0
+    int gpio_dio1 = -1;  // ESP32 GPIO for DIO1 (optional)
     int max_setup_tries = 5;
 
     unsigned sync_word = 0x01;  // Select something between 0-0xFF
@@ -96,7 +101,7 @@ class LoRaModule : public Module {
     OptionSelect settable_options = OptionSelect::kOptionAll;
   };
 
-  // on_initialized is called when LoRa.begin() has succeeded, for setting-up the module.
+  // on_initialized is called when lora initialization has succeeded.
   LoRaModule(const Options& options, App* app, VariableGroup& vg,
              const std::function<void()>& on_initialized = nullptr);
 
@@ -108,6 +113,15 @@ class LoRaModule : public Module {
   void set_on_transmit_done(const std::function<void()>& fn);
 
   void send_packet(const u_int8_t* buffer, size_t num_bytes);
+
+  /** @brief Poll for a packet. Returns packet size or 0 if none. */
+  int poll_packet(uint8_t* buffer, size_t max_bytes);
+
+  float last_rssi() const { return m_last_rssi; }
+  float last_snr() const { return m_last_snr; }
+
+  void sleep();
+  void standby();
 
   // This is called by an interrupt.
   void transmit_done_callback();
@@ -124,6 +138,7 @@ class LoRaModule : public Module {
   const int m_gpio_ss;
   const int m_gpio_rst;
   const int m_gpio_dio0;
+  const int m_gpio_dio1;
   const int m_max_setup_tries;
   std::function<void()> m_on_transmit_done;
 
@@ -139,6 +154,12 @@ class LoRaModule : public Module {
   unsigned m_init_tries = 0;
   bool m_is_ok = false;
   bool m_is_transmitting = false;
+
+  float m_last_rssi = 0.0f;
+  float m_last_snr = 0.0f;
+
+  ::Module* m_mod = nullptr;
+  ::SX1278* m_radio = nullptr;
 };
 
 }  // namespace og3

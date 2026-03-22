@@ -1,8 +1,8 @@
 {
     "name": "og3x-lora",
-    "version": "0.4.0",
-    "description": "Add support for RTM95 LoRa module to chl33/og3",
-    "keywords": "esp32, esp8266, lora",
+    "version": "0.6.0",
+    "description": "Add support for RTM95 LoRa module to chl33/og3 using RadioLib",
+    "keywords": "esp32, esp8266, lora, radiolib",
     "authors": [
 	{
 	    "name": "Chris Lee",
@@ -12,8 +12,8 @@
 	}
     ],
     "dependencies": {
-	"chl33/og3": "~0.3.16",
-	"sandeepmistry/LoRa": "~0.8.0"
+	"og3": "~0.5.0",
+	"jgromes/RadioLib": "^6.6.0"
     },
     "export": {
 	"exclude": [".*", "*~", "util/"]
