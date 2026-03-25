@@ -132,7 +132,6 @@ class LoRaModule : public Module {
   void config_lora();
 
   App* m_app;
-  SingleDependency m_dependencies;
   VariableGroup& m_vg;
   const std::function<void()> m_on_initialized;
   const int m_gpio_ss;

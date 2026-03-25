@@ -143,7 +143,6 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
                        const std::function<void()>& on_initialized)
     : Module(kName, &app->module_system()),
       m_app(app),
-      m_dependencies(ConfigInterface::kName),
       m_vg(vg),
       m_on_initialized(on_initialized),
       m_gpio_ss(options.gpio_ss),
@@ -161,14 +160,10 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
       m_signal_bandwidth(options.signal_bandwidth, lora::varFlag(options, kOptionSignalBandwidth),
                          vg),
       m_max_payload("max_payload", 0, nullptr, "max payload", 0, vg) {
-  setDependencies(&m_dependencies);
   if (options.on_transmit_done) {
     set_on_transmit_done(options.on_transmit_done);
   }
-  add_link_fn([this](og3::NameToModule& name_to_module) -> bool {
-    m_config = ConfigInterface::get(name_to_module);
-    return m_config != nullptr;
-  });
+  require(ConfigInterface::kName, &m_config);
   add_init_fn([this]() {
     if (m_config) {
       m_config->read_config(m_vg);
