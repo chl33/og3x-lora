@@ -12,7 +12,7 @@
 	}
     ],
     "dependencies": {
-	"og3": "~0.6.0",
+	"chl33/og3": "~0.6.0",
 	"jgromes/RadioLib": "^6.6.0",
 	"SPI": "*"
     },
