@@ -19,8 +19,6 @@ namespace og3 {
 class ConfigInterface;
 
 namespace lora {
-// ... (rest of lora namespace unchanged)
-
 enum class SpreadingFactor { kSF7, kSF8, kSF9, kSF10, kSF11, kSF12 };
 enum class SignalBandwidth { k125kHz, k500kHz };
 enum class Frequency { k433MHz, k868MHz, k915MHz };
