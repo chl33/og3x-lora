@@ -34,11 +34,11 @@ const char* SpreadingFactorVariable::kNames[6] = {"SF7", "SF8", "SF9", "SF10", "
 const char* SignalBandwidthVariable::kNames[2] = {"125k", "500k"};
 const char* FrequencyVariable::kNames[3] = {"433MHz", "868MHz", "915MHz"};
 
-const char SpreadingFactorVariable::kName[] = "spreading_factor";
+const char SpreadingFactorVariable::kName[] = "spreadingFactor";
 const char SpreadingFactorVariable::kDesc[] = "spreading factor";
 
-const char SignalBandwidthVariable::kName[] = "signal_bandwidth";
-const char SignalBandwidthVariable::kDesc[] = "signal_bandwidth";
+const char SignalBandwidthVariable::kName[] = "signalBandwidth";
+const char SignalBandwidthVariable::kDesc[] = "signal bandwidth";
 
 const char FrequencyVariable::kName[] = "frequency";
 
@@ -150,16 +150,16 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
       m_gpio_dio0(options.gpio_dio0),
       m_gpio_dio1(options.gpio_dio1),
       m_max_setup_tries(options.max_setup_tries),
-      m_sync_word("sync_word", options.sync_word, nullptr, "sync word",
+      m_sync_word("syncWord", options.sync_word, nullptr, "sync word",
                   lora::varFlag(options, kOptionSyncWord), vg),
-      m_enable_crc("enable_crc", options.enable_crc, "enable crc",
+      m_enable_crc("enableCrc", options.enable_crc, "enable crc",
                    lora::varFlag(options, kOptionEnableCrc), vg),
       m_frequency(options.frequency, lora::varFlag(options, kOptionFrequency), vg),
       m_spreading_factor(options.spreading_factor, lora::varFlag(options, kOptionSpreadingFactor),
                          vg),
       m_signal_bandwidth(options.signal_bandwidth, lora::varFlag(options, kOptionSignalBandwidth),
                          vg),
-      m_max_payload("max_payload", 0, nullptr, "max payload", 0, vg) {
+      m_max_payload("maxPayload", 0, nullptr, "max payload", 0, vg) {
   if (options.on_transmit_done) {
     set_on_transmit_done(options.on_transmit_done);
   }
