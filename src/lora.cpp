@@ -134,6 +134,82 @@ unsigned usa_max_payload_bytes(SpreadingFactor spreading_factor, SignalBandwidth
   return 0;
 }
 
+class RadioInterface {
+ public:
+  virtual ~RadioInterface() = default;
+  virtual int16_t begin(float freq) = 0;
+  virtual int16_t setFrequency(float freq) = 0;
+  virtual int16_t setSpreadingFactor(uint8_t sf) = 0;
+  virtual int16_t setBandwidth(float bw) = 0;
+  virtual int16_t setSyncWord(uint8_t syncWord) = 0;
+  virtual int16_t setCRC(bool enable) = 0;
+  virtual int16_t startReceive() = 0;
+  virtual int16_t transmit(uint8_t* buffer, size_t num_bytes) = 0;
+  virtual int16_t readData(uint8_t* buffer, size_t max_bytes) = 0;
+  virtual float getRSSI() = 0;
+  virtual float getSNR() = 0;
+  virtual size_t getPacketLength() = 0;
+  virtual int16_t sleep() = 0;
+  virtual int16_t standby() = 0;
+};
+
+class SX1276Radio : public RadioInterface {
+ public:
+  explicit SX1276Radio(::Module* mod) : m_radio(mod) {}
+  int16_t begin(float freq) override { return m_radio.begin(freq); }
+  int16_t setFrequency(float freq) override { return m_radio.setFrequency(freq); }
+  int16_t setSpreadingFactor(uint8_t sf) override { return m_radio.setSpreadingFactor(sf); }
+  int16_t setBandwidth(float bw) override { return m_radio.setBandwidth(bw); }
+  int16_t setSyncWord(uint8_t syncWord) override { return m_radio.setSyncWord(syncWord); }
+  int16_t setCRC(bool enable) override { return m_radio.setCRC(enable); }
+  int16_t startReceive() override { return m_radio.startReceive(); }
+  int16_t transmit(uint8_t* buffer, size_t num_bytes) override {
+    return m_radio.transmit(buffer, num_bytes);
+  }
+  int16_t readData(uint8_t* buffer, size_t max_bytes) override {
+    return m_radio.readData(buffer, max_bytes);
+  }
+  float getRSSI() override { return m_radio.getRSSI(); }
+  float getSNR() override { return m_radio.getSNR(); }
+  size_t getPacketLength() override { return m_radio.getPacketLength(); }
+  int16_t sleep() override { return m_radio.sleep(); }
+  int16_t standby() override { return m_radio.standby(); }
+
+ private:
+  ::SX1276 m_radio;
+};
+
+class SX1262Radio : public RadioInterface {
+ public:
+  explicit SX1262Radio(::Module* mod, float tcxo_voltage = 0.0f)
+      : m_radio(mod), m_tcxo_voltage(tcxo_voltage) {}
+  int16_t begin(float freq) override {
+    return m_radio.begin(freq, 125.0f, 9, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 10, 8,
+                         m_tcxo_voltage, false);
+  }
+  int16_t setFrequency(float freq) override { return m_radio.setFrequency(freq); }
+  int16_t setSpreadingFactor(uint8_t sf) override { return m_radio.setSpreadingFactor(sf); }
+  int16_t setBandwidth(float bw) override { return m_radio.setBandwidth(bw); }
+  int16_t setSyncWord(uint8_t syncWord) override { return m_radio.setSyncWord(syncWord); }
+  int16_t setCRC(bool enable) override { return m_radio.setCRC(enable ? 2 : 0); }
+  int16_t startReceive() override { return m_radio.startReceive(); }
+  int16_t transmit(uint8_t* buffer, size_t num_bytes) override {
+    return m_radio.transmit(buffer, num_bytes);
+  }
+  int16_t readData(uint8_t* buffer, size_t max_bytes) override {
+    return m_radio.readData(buffer, max_bytes);
+  }
+  float getRSSI() override { return m_radio.getRSSI(); }
+  float getSNR() override { return m_radio.getSNR(); }
+  size_t getPacketLength() override { return m_radio.getPacketLength(); }
+  int16_t sleep() override { return m_radio.sleep(); }
+  int16_t standby() override { return m_radio.standby(); }
+
+ private:
+  ::SX1262 m_radio;
+  const float m_tcxo_voltage;
+};
+
 }  // namespace lora
 
 const char LoRaModule::kName[] = "lora";
@@ -145,10 +221,16 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
       m_app(app),
       m_vg(vg),
       m_on_initialized(on_initialized),
+      m_module_type(options.is_sx1262() ? Options::ModuleType::kSX1262 : options.module_type),
       m_gpio_ss(options.gpio_ss),
       m_gpio_rst(options.gpio_rst),
       m_gpio_dio0(options.gpio_dio0),
       m_gpio_dio1(options.gpio_dio1),
+      m_gpio_busy(options.gpio_busy),
+      m_tcxo_voltage(options.tcxo_voltage),
+      m_gpio_irq(options.is_sx1262()
+                     ? (options.gpio_dio1 >= 0 ? options.gpio_dio1 : options.gpio_dio0)
+                     : options.gpio_dio0),
       m_max_setup_tries(options.max_setup_tries),
       m_sync_word("syncWord", options.sync_word, nullptr, "sync word",
                   lora::varFlag(options, kOptionSyncWord), vg),
@@ -172,6 +254,11 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
         lora::usa_max_payload_bytes(m_spreading_factor.value(), m_signal_bandwidth.value());
   });
   add_start_fn([this]() { this->setup_lora(); });
+}
+
+LoRaModule::~LoRaModule() {
+  delete m_radio;
+  delete m_mod;
 }
 
 void LoRaModule::set_on_transmit_done(const std::function<void()>& fn) {
@@ -208,8 +295,13 @@ void LoRaModule::setup_lora() {
   m_app->log().debugf("Initializing RadioLib (try %u/%u).", m_init_tries, m_max_setup_tries);
 
   if (!m_mod) {
-    m_mod = new ::Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1);
-    m_radio = new ::SX1276(m_mod);
+    if (m_module_type == Options::ModuleType::kSX1262) {
+      m_mod = new ::Module(m_gpio_ss, m_gpio_irq, m_gpio_rst, m_gpio_busy);
+      m_radio = new lora::SX1262Radio(m_mod, m_tcxo_voltage);
+    } else {
+      m_mod = new ::Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1);
+      m_radio = new lora::SX1276Radio(m_mod);
+    }
   }
 
   int state = m_radio->begin(m_frequency.to_uint() / 1000000.0f);
@@ -267,9 +359,8 @@ int LoRaModule::poll_packet(uint8_t* buffer, size_t max_bytes) {
 
   // Check if a packet was received (non-blocking)
   // In RadioLib, we can check if the IRQ for RX done is set.
-  // For SX127x, this is usually DIO0.
-  // If we don't have interrupts, we can check the IRQ flags.
-  if (::digitalRead(m_gpio_dio0) == HIGH) {
+  // For SX127x, this is DIO0. For SX126x, this is DIO1.
+  if (m_gpio_irq >= 0 && ::digitalRead(m_gpio_irq) == HIGH) {
     int state = m_radio->readData(buffer, max_bytes);
     if (state == RADIOLIB_ERR_NONE) {
       m_last_rssi = m_radio->getRSSI();

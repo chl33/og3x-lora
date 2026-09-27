@@ -13,12 +13,13 @@
 
 // Forward declarations for RadioLib
 class Module;
-class SX1276;
 
 namespace og3 {
 class ConfigInterface;
 
 namespace lora {
+class RadioInterface;
+
 enum class SpreadingFactor { kSF7, kSF8, kSF9, kSF10, kSF11, kSF12 };
 enum class SignalBandwidth { k125kHz, k500kHz };
 enum class Frequency { k433MHz, k868MHz, k915MHz };
@@ -77,10 +78,18 @@ class LoRaModule : public Module {
   };
 
   struct Options {
-    int gpio_ss = 5;     // ESP32 GPIO for SS
-    int gpio_rst = 14;   // ESP32 GPIO for RST
-    int gpio_dio0 = 2;   // ESP32 GPIO for DIO0
-    int gpio_dio1 = -1;  // ESP32 GPIO for DIO1 (optional)
+    enum class ModuleType {
+      kSX1276,  // RFM95W
+      kSX1262,  // Ai-Thinker Ra-01SH
+    };
+    ModuleType module_type = ModuleType::kSX1276;
+
+    int gpio_ss = 5;            // ESP32 GPIO for SS / NSS
+    int gpio_rst = 14;          // ESP32 GPIO for RST
+    int gpio_dio0 = 2;          // ESP32 GPIO for DIO0 (SX1276)
+    int gpio_dio1 = -1;         // ESP32 GPIO for DIO1 (SX1262 IRQ, or optional for SX1276)
+    int gpio_busy = -1;         // ESP32 GPIO for BUSY (SX1262)
+    float tcxo_voltage = 0.0f;  // TCXO voltage (0.0 for XTAL like Ra-01SH, 1.6 for TCXO)
     int max_setup_tries = 5;
 
     unsigned sync_word = 0x01;  // Select something between 0-0xFF
@@ -97,11 +106,14 @@ class LoRaModule : public Module {
     OptionSelect config_options = OptionSelect::kOptionAll;
     // Which options settable via web form.
     OptionSelect settable_options = OptionSelect::kOptionAll;
+
+    bool is_sx1262() const { return module_type == ModuleType::kSX1262 || gpio_busy >= 0; }
   };
 
   // on_initialized is called when lora initialization has succeeded.
   LoRaModule(const Options& options, App* app, VariableGroup& vg,
              const std::function<void()>& on_initialized = nullptr);
+  ~LoRaModule();
 
   bool is_ok() const { return m_is_ok; }
   bool is_transmitting() const { return m_is_transmitting; }
@@ -132,10 +144,14 @@ class LoRaModule : public Module {
   App* m_app;
   VariableGroup& m_vg;
   const std::function<void()> m_on_initialized;
+  const Options::ModuleType m_module_type;
   const int m_gpio_ss;
   const int m_gpio_rst;
   const int m_gpio_dio0;
   const int m_gpio_dio1;
+  const int m_gpio_busy;
+  const float m_tcxo_voltage;
+  const int m_gpio_irq;
   const int m_max_setup_tries;
   std::function<void()> m_on_transmit_done;
 
@@ -156,7 +172,7 @@ class LoRaModule : public Module {
   float m_last_snr = 0.0f;
 
   ::Module* m_mod = nullptr;
-  ::SX1276* m_radio = nullptr;
+  lora::RadioInterface* m_radio = nullptr;
 };
 
 }  // namespace og3

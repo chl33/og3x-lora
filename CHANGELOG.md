@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-09-26
+
+### Added
+- **SX1262 Support**: Added support for Semtech SX1262 LoRa modules (e.g. Ai-Thinker Ra-01SH). Configurable via `LoRaModule::Options::module_type` or automatically when `gpio_busy >= 0`.
+- **Hardware Configuration**: Added `gpio_busy` and `tcxo_voltage` to `LoRaModule::Options`.
+
 ## [0.6.3] - 2026-03-30
 
 ### Changed
