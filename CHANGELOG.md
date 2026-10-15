@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **og3 v0.7.0 Compatibility**: Updated `chl33/og3` dependency to `~0.7.0`.
-- **Lifecycle & Safety**: Explicitly deleted copy constructors and assignment operators for `LoRaModule`.
+- **Lifecycle & Safety**: Explicitly deleted copy constructors and assignment operators for `LoRaModule`, and adopted `std::unique_ptr` for `m_mod` and `m_radio` lifecycle management.
 
 ## [0.6.3] - 2026-03-30
 
