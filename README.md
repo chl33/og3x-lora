@@ -1,6 +1,6 @@
 # og3x-lora
 
-This library integrates LoRa modules with the the [og3](https://github.com/chl33/og3) library for ESP projects using the Arduino framework with [Platformio](https://platformio.org/).
+This library integrates LoRa modules (RFM95/SX1276 and Ai-Thinker Ra-01SH/SX1262) with the [og3](https://github.com/chl33/og3) library for ESP projects using the Arduino framework with [PlatformIO](https://platformio.org/).
 
 This library is used by these projects:
 - [LoRa133](https://github.com/chl33/LoRa133)

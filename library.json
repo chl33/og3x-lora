@@ -1,6 +1,6 @@
 {
     "name": "og3x-lora",
-    "version": "0.6.4",
+    "version": "0.7.0",
     "description": "Add support for RFM95 (SX1276) and Ai-Thinker Ra-01SH (SX1262) LoRa modules to chl33/og3 using RadioLib",
     "keywords": "esp32, esp8266, lora, radiolib",
     "authors": [
@@ -12,7 +12,7 @@
 	}
     ],
     "dependencies": {
-	"chl33/og3": "~0.6.2",
+	"chl33/og3": "~0.7.0",
 	"jgromes/RadioLib": "^6.6.0",
 	"SPI": "*"
     },

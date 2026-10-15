@@ -339,7 +339,7 @@ void LoRaModule::transmit_done_callback() {
   });
 }
 
-void LoRaModule::send_packet(const u_int8_t* buffer, size_t num_bytes) {
+void LoRaModule::send_packet(const uint8_t* buffer, size_t num_bytes) {
   if (!m_is_ok || !m_radio) {
     return;
   }

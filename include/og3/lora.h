@@ -64,6 +64,11 @@ unsigned usa_max_payload_bytes(SpreadingFactor spreading_factor, SignalBandwidth
 // NOTE: The transmitt-done callback is not working for me right now.
 class LoRaModule : public Module {
  public:
+  LoRaModule(const LoRaModule&) = delete;
+  LoRaModule(LoRaModule&&) = delete;
+  LoRaModule& operator=(const LoRaModule&) = delete;
+  LoRaModule& operator=(LoRaModule&&) = delete;
+
   static const char kName[];
   static const char kConfigUrl[];
 
@@ -122,7 +127,7 @@ class LoRaModule : public Module {
   }
   void set_on_transmit_done(const std::function<void()>& fn);
 
-  void send_packet(const u_int8_t* buffer, size_t num_bytes);
+  void send_packet(const uint8_t* buffer, size_t num_bytes);
 
   /** @brief Poll for a packet. Returns packet size or 0 if none. */
   int poll_packet(uint8_t* buffer, size_t max_bytes);
