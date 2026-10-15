@@ -9,6 +9,7 @@
 #include <sys/types.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 
 // Forward declarations for RadioLib
@@ -176,8 +177,8 @@ class LoRaModule : public Module {
   float m_last_rssi = 0.0f;
   float m_last_snr = 0.0f;
 
-  ::Module* m_mod = nullptr;
-  lora::RadioInterface* m_radio = nullptr;
+  std::unique_ptr<::Module> m_mod;
+  std::unique_ptr<lora::RadioInterface> m_radio;
 };
 
 }  // namespace og3

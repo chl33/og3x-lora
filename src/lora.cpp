@@ -256,10 +256,7 @@ LoRaModule::LoRaModule(const LoRaModule::Options& options, App* app, VariableGro
   add_start_fn([this]() { this->setup_lora(); });
 }
 
-LoRaModule::~LoRaModule() {
-  delete m_radio;
-  delete m_mod;
-}
+LoRaModule::~LoRaModule() = default;
 
 void LoRaModule::set_on_transmit_done(const std::function<void()>& fn) {
   m_on_transmit_done = fn;
@@ -296,11 +293,11 @@ void LoRaModule::setup_lora() {
 
   if (!m_mod) {
     if (m_module_type == Options::ModuleType::kSX1262) {
-      m_mod = new ::Module(m_gpio_ss, m_gpio_irq, m_gpio_rst, m_gpio_busy);
-      m_radio = new lora::SX1262Radio(m_mod, m_tcxo_voltage);
+      m_mod.reset(new ::Module(m_gpio_ss, m_gpio_irq, m_gpio_rst, m_gpio_busy));
+      m_radio.reset(new lora::SX1262Radio(m_mod.get(), m_tcxo_voltage));
     } else {
-      m_mod = new ::Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1);
-      m_radio = new lora::SX1276Radio(m_mod);
+      m_mod.reset(new ::Module(m_gpio_ss, m_gpio_dio0, m_gpio_rst, m_gpio_dio1));
+      m_radio.reset(new lora::SX1276Radio(m_mod.get()));
     }
   }
 
